@@ -85,10 +85,31 @@ done
 cat $data/text | sed 's:<UNK>::g' | sed 's:<NOISE>::g' | sed 's:<SPOKEN_NOISE>::g' > $dir/text_filt 
 if ! $skip_scoring ; then
   for ascale in $acoustic_scales; do
-     cat $dir/trans.$ascale | utils/int2sym.pl -f 2- $graphdir/words.txt | \
+     cat $dir/trans.$ascale | ../utils/int2sym.pl -f 2- $graphdir/words.txt | \
        sed 's:<UNK>::g' | sed 's:<NOISE>::g' | sed 's:<SPOKEN_NOISE>::g' | \
        compute-wer --text --mode=present ark:$dir/text_filt  ark,p:-  >& $dir/wer_$ascale || exit 1;
   done
 fi
 
 exit 0;
+
+decode-faster --acoustic-scale=0.5 --allow-partial=true --beam=15.0 --beam-delta=0.5 --binary=true \
+  --hash-ratio=2 --max-active=7000 --min-active=20 --word-symbol-table=words.txt \
+  L.fst ark:/u/pezeshki/test.ark ark,t:res.ark
+
+cat res.ark | ../utils/int2sym.pl -f 2- words.txt | \
+  compute-wer --text --mode=present ark:text ark,p:-  >& wer
+
+latgen-faster --acoustic-scale=0.5 --allow-partial=true --beam=15.0 --beam-delta=0.5 \
+  --hash-ratio=2 --lattice-beam=10 --max-active=7000 --min-active=20 \
+  --max-mem=500000 --word-symbol-table=words.txt L.fst ark:/u/pezeshki/test.ark "ark:|gzip -c > lat.1.gz"
+
+
+../local/score.sh --min-acwt 5 --max-acwt 10 --acwt-factor 0.1 --cmd "run.pl" . . .
+
+
+
+
+
+
+

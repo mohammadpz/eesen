@@ -32,22 +32,22 @@ dir=$3
 
 symtab=$lang_or_graph/words.txt
 
-for f in $symtab $dir/lat.1.gz $data/text; do
+for f in $symtab $dir/lat.1.gz $data/trans.txt; do
   [ ! -f $f ] && echo "score.sh: no such file $f" && exit 1;
 done
 
 mkdir -p $dir/scoring/log
 
-cat $data/text | sed 's:<UNK>::g' | sed 's:<NOISE>::g' | sed 's:<SPOKEN_NOISE>::g' > $dir/scoring/test_filt.txt
+cat $data/trans.txt | sed 's:<UNK>::g' | sed 's:<NOISE>::g' | sed 's:<SPOKEN_NOISE>::g' > $dir/scoring/test_filt.txt
 
 $cmd ACWT=$min_acwt:$max_acwt $dir/scoring/log/best_path.ACWT.log \
   lattice-scale --acoustic-scale=ACWT --ascale-factor=$acwt_factor  "ark:gunzip -c $dir/lat.*.gz|" ark:- \| \
   lattice-best-path --word-symbol-table=$symtab ark:- ark,t:$dir/scoring/ACWT.tra || exit 1;
 
-cat $data/text | sed 's:<UNK>::g' | sed 's:<NOISE>::g' | sed 's:<SPOKEN_NOISE>::g' > $dir/scoring/text_filt
+cat $data/trans.txt | sed 's:<UNK>::g' | sed 's:<NOISE>::g' | sed 's:<SPOKEN_NOISE>::g' > $dir/scoring/text_filt
 
 for acwt in `seq $min_acwt $max_acwt`; do
-  cat $dir/scoring/${acwt}.tra | utils/int2sym.pl -f 2- $symtab | \
+  cat $dir/scoring/${acwt}.tra | wsj/utils/int2sym.pl -f 2- $symtab | \
     sed 's:<UNK>::g' | sed 's:<NOISE>::g' | sed 's:<SPOKEN_NOISE>::g' | \
     compute-wer --text --mode=present ark:$dir/scoring/text_filt  ark,p:-  >& $dir/wer_$acwt || exit 1;
 done

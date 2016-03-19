@@ -118,3 +118,7 @@ if [ $stage -le 4 ]; then
       data/lang_char_larger_test_${lm_suffix} data/test_eval92 $dir/decode_eval92_${lm_suffix}_larger || exit 1;
   done
 fi
+
+steps/decode_ctc_lat.sh --cmd "$decode_cmd" --nj 1 --beam 2.0 --lattice_beam 3.0 --max-active 50 --acwt 0.9 \
+  data/lang_char_larger_test_tg data/test_dev93 $dir/decode_dev93_tg_larger || exit 1;
+

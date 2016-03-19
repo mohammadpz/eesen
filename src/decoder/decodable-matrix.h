@@ -25,6 +25,7 @@
 #include <vector>
 #include "base/kaldi-common.h"
 #include "decoder/decodable-itf.h"
+#include <signal.h>
 
 namespace eesen {
 
